@@ -22,7 +22,7 @@ from tensorpack import (
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
-
+from tensorflow.python.client import device_lib
 from tgan.data import Preprocessor, RandomZData, TGANDataFlow
 from tgan.trainer import GANTrainer
 
@@ -593,7 +593,7 @@ class TGANModel:
     """
 
     def __init__(
-        self, continuous_columns, output='output', gpu=None, max_epoch=5, steps_per_epoch=10000,
+        self, continuous_columns, output='output', gpus=None, max_epoch=5, steps_per_epoch=10000,
         save_checkpoints=True, restore_session=True, batch_size=200, z_dim=200, noise=0.2,
         l2norm=0.00001, learning_rate=0.001, num_gen_rnn=100, num_gen_feature=100,
         num_dis_layers=1, num_dis_hidden=100, optimizer='AdamOptimizer',
@@ -624,11 +624,14 @@ class TGANModel:
         self.num_dis_hidden = num_dis_hidden
         self.optimizer = optimizer
 
-        if gpu:
-            os.environ['CUDA_VISIBLE_DEVICES'] = gpu
+        self.gpus = gpus or self.get_gpus()
+        if self.gpus:
+            os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(list(map(str, self.gpus)))
 
-        self.gpu = gpu
 
+    def get_gpus():
+        return [x.locality.bus_id for x in device_lib.list_local_devices() if x.device_type == 'GPU']
+    
     def get_model(self, training=True):
         """Return a new instance of the model."""
         return GraphBuilder(
@@ -666,6 +669,18 @@ class TGANModel:
             RandomZData((self.batch_size, self.z_dim))
         )
 
+        
+    def get_trainer(self, input_queue):
+        if self.gpus:
+            return MultiGPUGANTrainer(
+            model=self.model,
+            input_queue=input_queue,
+            gpus=self.gpus)
+        else:
+            return GANTrainer(
+            model=self.model,
+            input_queue=input_queue)
+
     def fit(self, data):
         """Fit the model to the given data.
 
@@ -684,11 +699,8 @@ class TGANModel:
         input_queue = QueueInput(batch_data)
 
         self.model = self.get_model(training=True)
-
-        trainer = GANTrainer(
-            model=self.model,
-            input_queue=input_queue,
-        )
+        
+        trainer = self.get_trainer(input_queue)
 
         self.restore_path = os.path.join(self.model_dir, 'checkpoint')
 
