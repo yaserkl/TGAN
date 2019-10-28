@@ -120,8 +120,8 @@ class MultiGPUGANTrainer(TowerTrainer):
         raw_devices = ['/gpu:{}'.format(k) for k in gpus]
 
         # Setup input
-        input = StagingInput(input)
-        cbs = input.setup(model.get_inputs_desc())
+        input_queue = StagingInput(input_queue)
+        cbs = input_queue.setup(model.get_inputs_desc())
         self.register_callback(cbs)
 
         # Build the graph with multi-gpu replication
@@ -134,7 +134,7 @@ class MultiGPUGANTrainer(TowerTrainer):
 
         cost_list = DataParallelBuilder.build_on_towers(
             gpus,
-            lambda: self.tower_func(*input.get_input_tensors()),
+            lambda: self.tower_func(*input_queue.get_input_tensors()),
             devices)
 
         # Simply average the cost here. It might be faster to average the gradients
