@@ -629,7 +629,7 @@ class TGANModel:
             os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(list(map(str, self.gpus)))
 
 
-    def get_gpus():
+    def get_gpus(self):
         return [x.locality.bus_id for x in device_lib.list_local_devices() if x.device_type == 'GPU']
     
     def get_model(self, training=True):
@@ -699,7 +699,6 @@ class TGANModel:
         input_queue = QueueInput(batch_data)
 
         self.model = self.get_model(training=True)
-        
         trainer = self.get_trainer(input_queue)
 
         self.restore_path = os.path.join(self.model_dir, 'checkpoint')
