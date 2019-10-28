@@ -111,7 +111,7 @@ class MultiGPUGANTrainer(TowerTrainer):
 
     """
 
-    def __init__(self, input, model, gpus):
+    def __init__(self, input_queue, model, gpus):
         """Initialize object."""
         super(MultiGPUGANTrainer, self).__init__()
         if gpus:
