@@ -24,7 +24,7 @@ from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized
 from tensorflow.python.client import device_lib
 from tgan.data import Preprocessor, RandomZData, TGANDataFlow
-from tgan.trainer import GANTrainer
+from tgan.trainer import GANTrainer,MultiGPUGANTrainer
 
 TUNABLE_VARIABLES = {
     'batch_size': [50, 100, 200],
