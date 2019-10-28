@@ -114,7 +114,7 @@ class MultiGPUGANTrainer(TowerTrainer):
     def __init__(self, input_queue, model, gpus):
         """Initialize object."""
         super(MultiGPUGANTrainer, self).__init__()
-        if gpus:
+        if not gpus:
             raise ValueError('gpus must be strictly greater than 1.')
 
         raw_devices = ['/gpu:{}'.format(k) for k in gpus]
